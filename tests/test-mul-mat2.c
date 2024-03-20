@@ -2364,6 +2364,24 @@ void mul_mat_gq_6(
     }
 }
 
+// Function to save tensor to a binary file
+void save_tensor(const char *filename, gq_scale_t *tensor, int rows, int cols) {
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+    // Write tensor data
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            fprintf(file, "%.6f ", tensor[i * cols + j]); // Adjust precision as needed
+        }
+        fprintf(file, "\n");
+    }
+
+    fclose(file);
+}
+
 int main(int argc, const char ** argv) {
     assert(sizeof(gq_quant_t)*8 == gq_t_bits);
     ggml_time_init();
@@ -2497,6 +2515,8 @@ int main(int argc, const char ** argv) {
     }
 
     const int nIter = 1;
+    save_tensor("tensor1.txt", (gq_scale_t *) src0_gq, M, K);
+    save_tensor("tensor2.txt", (gq_scale_t *) src1_gq, K, N);
 
     const int64_t start = ggml_cycles();
     const int64_t start_us = ggml_time_us();
@@ -2506,30 +2526,37 @@ int main(int argc, const char ** argv) {
     for (int i = 0; i < nIter; i++) {
         if (method == 0) {
             mul_mat_f32_naive(src0, src1, dst, M, N, K);
+            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
         }
 
         if (method == 1) {
             mul_mat_gq_1(src0_gq, src1_gq, dst, M, N, K);
+            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
         }
 
         if (method == 2) {
             mul_mat_gq_2(src0_gq, src1_gq, dst, M, N, K);
+            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
         }
 
         if (method == 3) {
             mul_mat_gq_3(src0_gq, src1_gq, dst, M, N, K);
+            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
         }
 
         if (method == 4) {
             mul_mat_gq_4(src0_gq, src1_gq, dst, M, N, K);
+            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
         }
 
         if (method == 5) {
             mul_mat_gq_5(src0_gq, src1_gq, dst, M, N, K);
+            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
         }
 
         if (method == 6) {
             mul_mat_gq_6(src0_gq, src1_gq, dst, M, N, K);
+            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
         }
     }
 
