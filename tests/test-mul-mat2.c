@@ -2364,22 +2364,49 @@ void mul_mat_gq_6(
     }
 }
 
-// Function to save tensor to a binary file
-void save_tensor(const char *filename, gq_scale_t *tensor, int rows, int cols) {
-    FILE *file = fopen(filename, "wb");
+// Function to load a tensor from a text file
+void load_tensor(float *matrix, int rows, int cols, const char *filename) {
+    FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
+        printf("Error opening file %s for reading.\n", filename);
+        return;
     }
-    // Write tensor data
+
+    // Read matrix elements
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            fprintf(file, "%.6f ", tensor[i * cols + j]); // Adjust precision as needed
+            fscanf(file, "%f", &matrix[i * cols + j]);
         }
-        fprintf(file, "\n");
     }
 
     fclose(file);
+}
+
+// Function to save a tensor to a text file
+void save_tensor(float *tensor, int rows, int cols, const char *filename) {
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL) {
+        printf("Error opening file for writing.\n");
+        return;
+    }
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            fprintf(fp, "%.2f ", *(tensor + i * cols + j));
+        }
+        fprintf(fp, "\n"); // Add newline after each row
+    }
+
+    fclose(fp);
+}
+
+void printMatrix(float *matrix, int rows, int cols) {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            printf("%.2f ", matrix[i * cols + j]);
+        }
+        printf("\n");
+    }
 }
 
 int main(int argc, const char ** argv) {
@@ -2515,8 +2542,8 @@ int main(int argc, const char ** argv) {
     }
 
     const int nIter = 1;
-    save_tensor("tensor1.txt", (gq_scale_t *) src0_gq, M, K);
-    save_tensor("tensor2.txt", (gq_scale_t *) src1_gq, K, N);
+    save_tensor((gq_scale_t *) src0_gq, M, K, "tensor1.txt");
+    save_tensor((gq_scale_t *) src1_gq, K, N, "tensor2.txt");
 
     const int64_t start = ggml_cycles();
     const int64_t start_us = ggml_time_us();
@@ -2526,37 +2553,37 @@ int main(int argc, const char ** argv) {
     for (int i = 0; i < nIter; i++) {
         if (method == 0) {
             mul_mat_f32_naive(src0, src1, dst, M, N, K);
-            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
+            save_tensor((gq_scale_t *) dst, K, N, "result.txt");
         }
 
         if (method == 1) {
             mul_mat_gq_1(src0_gq, src1_gq, dst, M, N, K);
-            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
+            save_tensor((gq_scale_t *) dst, K, N, "result.txt");
         }
 
         if (method == 2) {
             mul_mat_gq_2(src0_gq, src1_gq, dst, M, N, K);
-            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
+            save_tensor((gq_scale_t *) dst, K, N, "result.txt");
         }
 
         if (method == 3) {
             mul_mat_gq_3(src0_gq, src1_gq, dst, M, N, K);
-            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
+            save_tensor((gq_scale_t *) dst, K, N, "result.txt");
         }
 
         if (method == 4) {
             mul_mat_gq_4(src0_gq, src1_gq, dst, M, N, K);
-            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
+            save_tensor((gq_scale_t *) src1_gq, K, N, "result.txt");
         }
 
         if (method == 5) {
             mul_mat_gq_5(src0_gq, src1_gq, dst, M, N, K);
-            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
+            save_tensor((gq_scale_t *) src1_gq, K, N, "result.txt");
         }
 
         if (method == 6) {
             mul_mat_gq_6(src0_gq, src1_gq, dst, M, N, K);
-            save_tensor("result.txt", (gq_scale_t *) src1_gq, K, N);
+            save_tensor((gq_scale_t *) src1_gq, K, N, "result.txt");
         }
     }
 
